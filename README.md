@@ -19,12 +19,15 @@ Create a Docker Web Service with this directory as the repository/root directory
 Required environment variables:
 
 ```text
-DB_CONNECTION_STRING=mysql://USER:PASSWORD@HOST:PORT/DATABASE
+DB_CONNECTION_STRING=mysql://USER:PASSWORD@HOST:PORT/DATABASE?ssl-mode=REQUIRED
+MYSQL_SSL=true
 FRONTEND_ORIGIN=https://your-frontend.onrender.com
 JWT_SECRET=change_this_to_a_long_random_secret_at_least_24_chars
 ENCRYPTION_KEY=change_this_to_a_32_byte_or_long_random_secret
 BLOCKCHAIN_ENABLED=false
 LOCAL_BLOCKCHAIN_ENABLED=true
 ```
+
+For Aiven, copy the Service URI from the dashboard. The backend supports `ssl-mode=REQUIRED`. If you enable CA verification, set `MYSQL_SSL_CA` to the CA certificate value.
 
 Render injects `PORT`; the Dockerfile defaults to `10000` for local Docker compatibility.

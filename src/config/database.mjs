@@ -254,16 +254,39 @@ function parseMysqlUrl(connectionString) {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database,
-    ssl: parseSslOption(url.searchParams.get("ssl") ?? process.env.MYSQL_SSL)
+    ssl: parseSslOption(getMysqlSslValue(url))
   };
 }
 
+function getMysqlSslValue(url) {
+  return url.searchParams.get("ssl")
+    ?? url.searchParams.get("ssl-mode")
+    ?? url.searchParams.get("sslmode")
+    ?? process.env.MYSQL_SSL;
+}
+
 function parseSslOption(value) {
-  if (!value || value === "false") {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  if (!normalized || ["false", "0", "disabled", "disable"].includes(normalized)) {
     return undefined;
   }
 
-  return value === "true" || value === "1" ? {} : undefined;
+  if (!["true", "1", "required", "require", "verify-ca", "verify_ca", "verify-full", "verify_identity"].includes(normalized)) {
+    return undefined;
+  }
+
+  const ssl = {};
+
+  if (process.env.MYSQL_SSL_CA) {
+    ssl.ca = process.env.MYSQL_SSL_CA.replace(/\\n/g, "\n");
+  }
+
+  if (String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED ?? "").trim().toLowerCase() === "false") {
+    ssl.rejectUnauthorized = false;
+  }
+
+  return ssl;
 }
 
 function quoteIdentifier(identifier) {
