@@ -21,6 +21,7 @@ Required environment variables:
 ```text
 DB_CONNECTION_STRING=mysql://USER:PASSWORD@HOST:PORT/DATABASE?ssl-mode=REQUIRED
 MYSQL_SSL=true
+MYSQL_SSL_CA=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----
 FRONTEND_ORIGIN=https://your-frontend.onrender.com
 JWT_SECRET=change_this_to_a_long_random_secret_at_least_24_chars
 ENCRYPTION_KEY=change_this_to_a_32_byte_or_long_random_secret

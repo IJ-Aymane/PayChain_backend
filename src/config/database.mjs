@@ -220,10 +220,14 @@ async function runMigrations() {
 }
 
 function getDatabaseConfig() {
-  const connectionString = process.env.DB_CONNECTION_STRING ?? process.env.MYSQL_URL;
+  const connectionString = process.env.DB_CONNECTION_STRING ?? process.env.MYSQL_URL ?? process.env.DATABASE_URL;
 
   if (connectionString) {
     return parseMysqlUrl(connectionString);
+  }
+
+  if (isProductionRuntime() && !hasExplicitMysqlConfig()) {
+    throw new Error("DB_CONNECTION_STRING is required in production. Set it in Render Environment to your Aiven MySQL Service URI.");
   }
 
   return {
@@ -234,6 +238,14 @@ function getDatabaseConfig() {
     database: process.env.MYSQL_DATABASE ?? "paychain",
     ssl: parseSslOption(process.env.MYSQL_SSL)
   };
+}
+
+function isProductionRuntime() {
+  return process.env.NODE_ENV === "production" || Boolean(process.env.RENDER);
+}
+
+function hasExplicitMysqlConfig() {
+  return Boolean(process.env.MYSQL_HOST || process.env.MYSQL_USER || process.env.MYSQL_PASSWORD || process.env.MYSQL_DATABASE);
 }
 
 function parseMysqlUrl(connectionString) {

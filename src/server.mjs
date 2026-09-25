@@ -49,8 +49,8 @@ try {
 }
 
 function getStartupErrorMessage(error) {
-  if (error?.code === "ECONNREFUSED") {
-    return "MySQL is not reachable. Start MySQL on 127.0.0.1:3306 or update DB_CONNECTION_STRING in services/backend/.env.";
+  if (["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "EHOSTUNREACH"].includes(error?.code)) {
+    return "MySQL is not reachable. Check DB_CONNECTION_STRING in your Render environment variables and verify the Aiven service is running.";
   }
 
   return error instanceof Error ? error.message : "Unexpected startup error";
