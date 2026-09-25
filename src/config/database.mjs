@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 
 import mysql from "mysql2/promise";
 
@@ -309,11 +310,29 @@ function getMysqlSslCa() {
     return process.env.MYSQL_SSL_CA.replace(/\\n/g, "\n");
   }
 
-  if (!process.env.MYSQL_SSL_CA_FILE) {
+  const caFile = getMysqlSslCaFile();
+
+  if (!caFile) {
     return undefined;
   }
 
-  return fs.readFileSync(process.env.MYSQL_SSL_CA_FILE, "utf8");
+  try {
+    return fs.readFileSync(caFile, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error(`MYSQL_SSL_CA_FILE points to ${caFile}, but that file does not exist. Add it to backend/secrets/aiven-ca.pem, add a Render Secret File, or update MYSQL_SSL_CA_FILE.`);
+    }
+
+    throw error;
+  }
+}
+
+function getMysqlSslCaFile() {
+  const bundledCaFile = path.resolve(process.cwd(), "secrets/aiven-ca.pem");
+  const candidates = [process.env.MYSQL_SSL_CA_FILE, bundledCaFile].filter(Boolean);
+  const existingFile = candidates.find((candidate) => fs.existsSync(candidate));
+
+  return existingFile ?? process.env.MYSQL_SSL_CA_FILE;
 }
 
 function quoteIdentifier(identifier) {

@@ -19,6 +19,9 @@ export function getEnvironmentSummary() {
     hasDbConnectionString: Boolean(process.env.DB_CONNECTION_STRING || process.env.MYSQL_URL || process.env.DATABASE_URL),
     hasMysqlSslCa: Boolean(process.env.MYSQL_SSL_CA),
     hasMysqlSslCaFile: Boolean(process.env.MYSQL_SSL_CA_FILE),
+    mysqlSslCaFileExists: process.env.MYSQL_SSL_CA_FILE ? fs.existsSync(process.env.MYSQL_SSL_CA_FILE) : false,
+    mysqlSslCaFile: process.env.MYSQL_SSL_CA_FILE ?? null,
+    bundledMysqlSslCaFileExists: fs.existsSync(path.resolve(process.cwd(), "secrets/aiven-ca.pem")),
     frontendOrigin: process.env.FRONTEND_ORIGIN ?? null,
     nodeEnv: process.env.NODE_ENV ?? null,
     render: Boolean(process.env.RENDER)

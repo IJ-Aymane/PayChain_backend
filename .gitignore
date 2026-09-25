@@ -8,3 +8,4 @@ data
 secrets/*
 !secrets/.gitkeep
 !secrets/README.md
+!secrets/aiven-ca.pem

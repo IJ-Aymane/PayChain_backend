@@ -19,7 +19,7 @@ app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1));
 applySecurityHeaders(app);
 
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+  origin: getFrontendOrigin(),
   credentials: true
 }));
 app.use(express.json({ limit: "1mb" }));
@@ -46,6 +46,12 @@ try {
 } catch (error) {
   console.error("Failed to start PayChain backend:", getStartupErrorMessage(error));
   process.exit(1);
+}
+
+function getFrontendOrigin() {
+  const origin = process.env.FRONTEND_ORIGIN ?? "http://localhost:5173";
+  const markdownLinkMatch = origin.match(/^\[[^\]]+\]\((https?:\/\/[^)]+)\)$/);
+  return markdownLinkMatch?.[1] ?? origin;
 }
 
 function getStartupErrorMessage(error) {

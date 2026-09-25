@@ -16,6 +16,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY package*.json ./
 COPY src ./src
 COPY sql ./sql
+COPY secrets ./secrets
 
 EXPOSE 10000
 
