@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 import mysql from "mysql2/promise";
 
 let pool;
@@ -289,9 +291,10 @@ function parseSslOption(value) {
   }
 
   const ssl = {};
+  const ca = getMysqlSslCa();
 
-  if (process.env.MYSQL_SSL_CA) {
-    ssl.ca = process.env.MYSQL_SSL_CA.replace(/\\n/g, "\n");
+  if (ca) {
+    ssl.ca = ca;
   }
 
   if (String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED ?? "").trim().toLowerCase() === "false") {
@@ -299,6 +302,18 @@ function parseSslOption(value) {
   }
 
   return ssl;
+}
+
+function getMysqlSslCa() {
+  if (process.env.MYSQL_SSL_CA) {
+    return process.env.MYSQL_SSL_CA.replace(/\\n/g, "\n");
+  }
+
+  if (!process.env.MYSQL_SSL_CA_FILE) {
+    return undefined;
+  }
+
+  return fs.readFileSync(process.env.MYSQL_SSL_CA_FILE, "utf8");
 }
 
 function quoteIdentifier(identifier) {
