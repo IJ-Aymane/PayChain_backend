@@ -1,5 +1,6 @@
+import { getEnvironmentSummary } from "./config/env.mjs";
+
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 
 import { initDatabase } from "./config/database.mjs";
@@ -10,8 +11,6 @@ import adminRoutes from "./routes/adminRoutes.mjs";
 import authRoutes from "./routes/authRoutes.mjs";
 import transactionRoutes from "./routes/transactionRoutes.mjs";
 import { isBlockchainEnabled } from "./utils/blockchain.mjs";
-
-dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -39,6 +38,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 try {
+  console.log("PayChain environment:", getEnvironmentSummary());
   await initDatabase();
   app.listen(port, () => {
     console.log(`PayChain custodial backend running on http://localhost:${port}`);
