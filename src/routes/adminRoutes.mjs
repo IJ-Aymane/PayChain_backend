@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  adminEscrows,
   adminSummary,
   adminTransactions,
   adminUsers,
@@ -20,6 +21,7 @@ router.use(requireAdmin);
 router.get("/summary", adminSummary);
 router.get("/users", adminUsers);
 router.get("/transactions", adminTransactions);
+router.get("/escrows", adminEscrows);
 router.post("/users/:id/reset-demo-balance", resetUserDemoBalance);
 router.post("/users/:id/set-demo-balance", setUserDemoBalance);
 router.post("/users/:id/suspend", suspendUserAccount);

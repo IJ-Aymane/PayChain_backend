@@ -1,3 +1,4 @@
+import { listEscrowsForAdmin } from "../models/escrowModel.mjs";
 import { countTransactionsByStatus, createTransaction, listTransactionsForAdmin } from "../models/transactionModel.mjs";
 import { countUsers, findUserById, listUsersForAdmin, suspendUser, toSafeUser, unsuspendUser } from "../models/userModel.mjs";
 import { formatDemoBalanceRow, getDemoLedgerTotals, resetDemoBalance, setDemoPayBalance } from "../models/demoLedgerModel.mjs";
@@ -46,6 +47,20 @@ export async function adminTransactions(request, response, next) {
     });
 
     response.json({ transactions });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function adminEscrows(request, response, next) {
+  try {
+    const escrows = await listEscrowsForAdmin({
+      status: request.query.status,
+      search: request.query.search,
+      limit: request.query.limit
+    });
+
+    response.json({ escrows });
   } catch (error) {
     next(error);
   }

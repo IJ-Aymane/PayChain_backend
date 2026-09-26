@@ -75,3 +75,49 @@ export async function listEscrowsForUser(userId) {
     [userId, userId]
   );
 }
+
+export async function listEscrowsForAdmin({ status = "", search = "", limit = 100 } = {}) {
+  const params = [];
+  const filters = [];
+
+  if (status) {
+    filters.push("e.status = ?");
+    params.push(status);
+  }
+
+  const rawSearch = String(search ?? "").trim();
+  if (rawSearch) {
+    const like = `%${rawSearch.toLowerCase()}%`;
+    filters.push(
+      "(LOWER(e.id) LIKE ? OR LOWER(e.onchain_escrow_id) LIKE ? OR LOWER(bu.username) LIKE ? OR LOWER(su.username) LIKE ? OR LOWER(bu.email) LIKE ? OR LOWER(su.email) LIKE ?)"
+    );
+    params.push(like, like, like, like, like, like);
+  }
+
+  const sanitizedLimit = sanitizeLimit(limit, 100, 300);
+
+  return query(
+    `SELECT
+       e.*,
+       bu.username AS buyer_username,
+       bu.email AS buyer_email,
+       su.username AS seller_username,
+       su.email AS seller_email
+     FROM escrows e
+     LEFT JOIN users bu ON bu.id = e.buyer_user_id
+     LEFT JOIN users su ON su.id = e.seller_user_id
+     ${filters.length ? `WHERE ${filters.join(" AND ")}` : ""}
+     ORDER BY e.created_at DESC
+     LIMIT ${sanitizedLimit}`,
+    params
+  );
+}
+
+function sanitizeLimit(value, fallback, maximum) {
+  const number = Number.parseInt(String(value ?? fallback), 10);
+  if (!Number.isFinite(number)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(number, 1), maximum);
+}

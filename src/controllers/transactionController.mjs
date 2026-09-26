@@ -1,3 +1,4 @@
+import { isConfiguredAdmin } from "../middlewares/adminMiddleware.mjs";
 import { createEscrow, findEscrowById, listEscrowsForUser, updateEscrow } from "../models/escrowModel.mjs";
 import { getLocalChainBlocks, verifyLocalChainIntegrity } from "../models/localBlockchainModel.mjs";
 import { createTransaction, findTransactionReceiptForUser, listTransactionsForUserFiltered } from "../models/transactionModel.mjs";
@@ -349,7 +350,11 @@ export async function disputeEscrow(request, response, next) {
 export async function refundEscrow(request, response, next) {
   try {
     const user = request.user;
-    const escrow = await loadEscrowForUser(request.params.id, user.id);
+    if (!isConfiguredAdmin(user)) {
+      throw httpError(403, "Only an admin arbitrator can refund disputed escrows");
+    }
+
+    const escrow = await loadEscrow(request.params.id);
 
     if (escrow.status !== "DISPUTED") {
       throw httpError(400, "Only disputed escrows can be refunded");
@@ -375,7 +380,12 @@ export async function refundEscrow(request, response, next) {
       toAddress: escrow.buyer_address,
       txHash: result.txHash,
       status: result.status,
-      metadata: { escrowId: escrow.id, onchainEscrowId: escrow.onchain_escrow_id, mode: result.demo ? "demo" : "blockchain" }
+      metadata: {
+        escrowId: escrow.id,
+        onchainEscrowId: escrow.onchain_escrow_id,
+        mode: result.demo ? "demo" : "blockchain",
+        adminUserId: user.id
+      }
     });
 
     response.json({ escrow: updated });
@@ -384,18 +394,24 @@ export async function refundEscrow(request, response, next) {
   }
 }
 
-async function loadEscrowForUser(escrowId, userId) {
+async function loadEscrow(escrowId) {
   const escrow = await findEscrowById(escrowId);
   if (!escrow) {
     throw httpError(404, "Escrow not found");
   }
 
-  if (escrow.buyer_user_id !== userId && escrow.seller_user_id !== userId) {
-    throw httpError(403, "You are not a participant in this escrow");
-  }
-
   if (!escrow.onchain_escrow_id) {
     throw httpError(400, "Escrow is missing its on-chain ID");
+  }
+
+  return escrow;
+}
+
+async function loadEscrowForUser(escrowId, userId) {
+  const escrow = await loadEscrow(escrowId);
+
+  if (escrow.buyer_user_id !== userId && escrow.seller_user_id !== userId) {
+    throw httpError(403, "You are not a participant in this escrow");
   }
 
   return escrow;
