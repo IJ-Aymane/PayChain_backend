@@ -147,10 +147,11 @@ export async function claimFaucet(request, response, next) {
 export async function transfer(request, response, next) {
   let receiver;
   const sender = request.user;
-  const { recipient, amount } = request.body;
+  const { recipient } = request.body;
+  let amount = "0";
 
   try {
-    validateAmount(amount);
+    amount = normalizeAmount(request.body.amount);
 
     receiver = await findUserByIdentifier(recipient);
     if (!receiver) {
@@ -209,10 +210,9 @@ export async function transfer(request, response, next) {
 export async function createEscrowAction(request, response, next) {
   try {
     const buyer = request.user;
-    const { seller, amount } = request.body;
+    const { seller } = request.body;
+    const amount = normalizeAmount(request.body.amount);
     const asset = normalizeAsset(request.body.asset ?? "ETH");
-
-    validateAmount(amount);
 
     if (asset !== "ETH") {
       throw httpError(400, "The current Escrow contract supports ETH deposits only");
@@ -429,7 +429,6 @@ async function logFailedFaucet(user, error) {
       error: getErrorMessage(error)
     });
   } catch {
-    // Keep the original blockchain/configuration error for the API response.
   }
 }
 
@@ -447,7 +446,6 @@ async function logFailedTransfer({ sender, receiver, amount, error }) {
       error: getErrorMessage(error)
     });
   } catch {
-    // Keep the original blockchain/configuration error for the API response.
   }
 }
 
@@ -542,10 +540,14 @@ function parseMetadata(value) {
   }
 }
 
-function validateAmount(amount) {
-  if (!/^(0|[1-9]\d*)(\.\d+)?$/.test(String(amount ?? "")) || Number(amount) <= 0) {
-    throw httpError(400, "Amount must be a positive decimal");
+function normalizeAmount(amount) {
+  const value = String(amount ?? "").trim();
+
+  if (!/^(0|[1-9]\d*)(\.\d{1,18})?$/.test(value) || Number(value) <= 0) {
+    throw httpError(400, "Amount must be a positive decimal with up to 18 decimal places");
   }
+
+  return value;
 }
 
 function getErrorMessage(error) {
